@@ -47,9 +47,9 @@ app.post("/signin", async (req, res) => {
     });
     return;
   }
-  const find = await client.user.findFirst({
+  const find = await client.user.findUnique({
     where: {
-      name: parsedData.data.username,
+      email: parsedData.data.email,
       password: parsedData.data.password,
     },
   });
@@ -67,9 +67,9 @@ app.post("/signin", async (req, res) => {
     },
     JWT_SECRET
   );
-  res.json({
-    token,
-  });
+
+  res.cookie("token",token);
+
 });
 
 app.post("/room", middleware, async (req, res) => {
