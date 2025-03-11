@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
 import Button from './Button';
+import Link from 'next/link';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -29,7 +30,7 @@ const Navbar = () => {
     >
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center">
+          <Link href="/" className="flex items-center">
             <span className="font-serif text-2xl font-bold tracking-tight">
               excalidraw<span className="text-blue-500">.</span>
             </span>
@@ -37,21 +38,21 @@ const Navbar = () => {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
+            <Link href="/" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
               Home
             </Link>
-            <Link to="#features" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
+            <Link href="#features" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
               Features
             </Link>
-            <Link to="#testimonials" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
+            <Link href="#testimonials" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
               Testimonials
             </Link>
-            <Link to="#pricing" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
+            <Link href="#pricing" className="text-foreground/80 hover:text-foreground transition-colors font-medium">
               Pricing
             </Link>
           </nav>
           
-          {/* Call to action */}
+          {/* Call href action */}
           <div className="hidden md:flex items-center space-x-4">
             <Button variant="outline" size="sm">Log in</Button>
             <Button size="sm">Sign up</Button>
@@ -92,28 +93,28 @@ const Navbar = () => {
       >
         <div className="container mx-auto px-4 py-4 space-y-2">
           <Link 
-            to="/" 
+           href="/" 
             className="block py-3 px-4 text-foreground/80 hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             Home
           </Link>
           <Link 
-            to="#features" 
+           href="#features" 
             className="block py-3 px-4 text-foreground/80 hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             Features
           </Link>
           <Link 
-            to="#testimonials" 
+           href="#testimonials" 
             className="block py-3 px-4 text-foreground/80 hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             Testimonials
           </Link>
           <Link 
-            to="#pricing" 
+           href="#pricing" 
             className="block py-3 px-4 text-foreground/80 hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             onClick={() => setIsMobileMenuOpen(false)}
           >

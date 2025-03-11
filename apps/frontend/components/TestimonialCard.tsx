@@ -35,7 +35,7 @@ const TestimonialCard = ({
       
       <div className="flex items-center">
         {avatar ? (
-          <img 
+          <image 
             src={avatar} 
             alt={author}
             className="w-10 h-10 rounded-full mr-4 object-cover"

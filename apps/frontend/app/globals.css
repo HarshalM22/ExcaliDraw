@@ -1,6 +1,6 @@
  @import "tailwindcss";
 
-:root {
+/* :root {
   --background: #ffffff;
   --foreground: #171717;
 }
@@ -14,8 +14,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #0a0a0a;
+    --background: #ededed;
   }
 }
 
@@ -23,13 +23,11 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-} 
+}  */
 
-/* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Roboto+Mono&display=swap');
 
-@import "tailwindcss/preflight";
-@tailwind utilities;
-@tailwind utilities;
+
+
 
 @layer base {
   :root {
@@ -74,7 +72,7 @@ body {
   }
 }
 
-@layer base {
+/* @layer base {
   * {
     @apply border-border;
   }
@@ -122,7 +120,7 @@ body {
     animation-delay: 0.5s;
   }
   
-  /* .animate-delay-700 {
+   .animate-delay-700 {
     animation-delay: 0.7s;
   }
   
@@ -131,8 +129,8 @@ body {
   }
 }
 
-/* General scrollbar styling */
-/* ::-webkit-scrollbar {
+/*General scrollbar styling */
+ /* ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
@@ -150,13 +148,13 @@ body {
   background: rgba(0, 0, 0, 0.2);
 }
 
-/* Custom styles for specific components */
-/* html {
-  scroll-behavior: smooth;
-} */ 
+ /*Custom styles for specific components */
+ /* html {
+  scroll-behavior: smooth; */
+/* }  */ 
 
-/* Gradients and background */
-/* .bg-mesh {
+ /*Gradients and background */
+ /* .bg-mesh {
   background-image: radial-gradient(at 40% 20%, rgba(61, 65, 218, 0.05) 0px, transparent 50%),
                     radial-gradient(at 80% 0%, rgba(104, 117, 245, 0.05) 0px, transparent 50%),
                     radial-gradient(at 0% 50%, rgba(142, 223, 245, 0.05) 0px, transparent 50%),
@@ -164,5 +162,5 @@ body {
                     radial-gradient(at 0% 100%, rgba(142, 103, 245, 0.05) 0px, transparent 50%),
                     radial-gradient(at 80% 100%, rgba(142, 223, 245, 0.05) 0px, transparent 50%),
                     radial-gradient(at 0% 0%, rgba(250, 167, 124, 0.05) 0px, transparent 50%);
-} */
+}  */
 

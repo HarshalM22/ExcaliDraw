@@ -1,5 +1,7 @@
+
+import Link from 'next/link';
 import React from 'react';
-import { Link } from 'react-router-dom';
+
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -48,7 +50,7 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-2">
-            <Link to="/" className="inline-block mb-6">
+            <Link href="/" className="inline-block mb-6">
               <span className="font-serif text-2xl font-bold tracking-tight">
                 excalidraw<span className="text-blue-500">.</span>
               </span>
@@ -83,7 +85,7 @@ const Footer = () => {
                 {group.links.map((link, j) => (
                   <li key={j}>
                     <Link 
-                      to={link.href} 
+                      href={link.href} 
                       className="text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {link.name}
