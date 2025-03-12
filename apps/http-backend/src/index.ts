@@ -24,9 +24,10 @@ app.post("/signup", async function (req, res) {
   try {
     await client.user.create({
       data: {
-        email: parsedData.data.username,
+        email: parsedData.data.email,
         password: parsedData.data.password,
-        name: parsedData.data.username,
+        name: parsedData.data.name,
+        username :parsedData.data.username
       },
     });
     res.json({
@@ -39,7 +40,7 @@ app.post("/signup", async function (req, res) {
   }
 });
 
-app.post("/signin", async (req, res) => {
+app.post("/login", async (req, res) => {
   const parsedData = SigninSchema.safeParse(req.body);
   if (!parsedData.success) {
     res.json({
@@ -69,6 +70,9 @@ app.post("/signin", async (req, res) => {
   );
 
   res.cookie("token",token);
+  res.json({
+    message :"user is loged in"
+  })
 
 });
 
@@ -82,17 +86,13 @@ app.post("/room", middleware, async (req, res) => {
   }
   // @ts-ignore
   const userId = req.userId;
-  console.log(userId);
   try {
-    console.log("entered in ttry ");
-    console.log(RoomData.data.name);
     const Room = await client.room.create({
      data : {
        slug: RoomData.data.name,
       adminId: userId,
      }
     });
-    console.log(Room.id);
     res.json({
       roomId: Room.id,
     });
