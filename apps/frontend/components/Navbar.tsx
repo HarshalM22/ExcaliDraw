@@ -1,12 +1,16 @@
+'use client'
 import { useState, useEffect } from 'react';
-// import { Link } from 'react-router-dom';
+
 import Button from './Button';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  const router = useRouter();
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -54,8 +58,10 @@ const Navbar = () => {
           
           {/* Call href action */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="outline" size="sm">Log in</Button>
-            <Button size="sm">Sign up</Button>
+            <Button onClick={()=>{router.replace("/login")}} variant="outline" size="sm">Log in</Button>
+            <Button size="sm" onClick={
+              ()=>{router.replace("/signup")}
+            }>Sign up</Button>
           </div>
           
           {/* Mobile menu button */}
