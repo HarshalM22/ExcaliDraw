@@ -1,3 +1,4 @@
+import { getCookies } from "@/auth/auth";
 import { RoomCanvas } from "@/components/RoomCanvas";
 
 
@@ -7,9 +8,12 @@ export default async function dashboard({params}:{
   }
 }) {
   const roomId = (await params).roomId ;
-  console.log(roomId);
+
+  const token = await(getCookies())
+ 
+
   
 
-  return <RoomCanvas roomId={roomId}/>
+  return <RoomCanvas roomId={roomId} token={token}/>
  
 }

@@ -2,7 +2,9 @@
 
 import Button from '@/components/Button';
 import { HTTP_BACKEND } from '@/config';
+import { cookie } from '@/setcookie/Cookie';
 import axios from 'axios';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
@@ -18,19 +20,19 @@ export default function Login () {
   const res = await axios.post(`${HTTP_BACKEND}/login`,{
     email,
     password
-  })
+  },{ withCredentials: true}) 
   if(!res){
-    console.log("something brokeee......")
+    console.log("something brokeee at backend......")
   }
-  router.replace("/dashboard") ;
 
+  router.replace("/dashboard") ;
  }
 
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault()
    
-  };
+  // };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -47,7 +49,7 @@ export default function Login () {
           </div>
           
           <div className="bg-white/40 backdrop-blur-lg border-8 border-white/30 shadow-2xs hover:shadow-2xl transition-all duration-300  p-8 rounded-xl shadow-lg">
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* <form className="space-y-6" onSubmit={handleSubmit}> */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                   Email address
@@ -107,7 +109,7 @@ export default function Login () {
                  {"Log in"}
                 </Button>
               </div>
-            </form>
+            {/* </form> */}
           </div>
           
           <div className="text-center mt-4">

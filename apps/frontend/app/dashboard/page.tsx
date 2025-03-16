@@ -1,50 +1,34 @@
 'use client'
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { PlusCircle, Grid, PlusCircleIcon, LucidePlusCircle } from 'lucide-react';
-import Navbar from '@/components/Navbar';
+import { PlusCircle, Grid} from 'lucide-react';
+
 import RoomCard from '@/components/RoomCard';
 import CreateRoomModal from '@/components/CreateRoomModal';
+import axios from 'axios';
+import { HTTP_BACKEND } from '@/config';
+import { useRouter } from 'next/navigation';
 
-
-// Mock data for rooms - in a real app this would come from a database
-const initialRooms = [
-  { id: '1', name: 'Wireframe Planning', description: 'Team brainstorming for new feature wireframes', lastEdited: '2 hours ago', participants: 4 },
-  { id: '2', name: 'UI Design Review', description: 'Feedback session for dashboard redesign', lastEdited: '1 day ago', participants: 3 },
-  { id: '3', name: 'Product Roadmap', description: 'Visual roadmap for Q3 planning', lastEdited: '3 days ago', participants: 5 },
-];
 
 export default function Dashboard() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [rooms, setRooms] = useState(initialRooms);
+  const [rooms, setRooms] = useState([]);
+  const router = useRouter()
+  
+  
+useEffect(()=>{
+  async function existingRooms(){
+    const res = await axios.get(`${HTTP_BACKEND}/room`,{ withCredentials: true })
+    setRooms(res.data.rooms)
+  }
+  existingRooms() ;
+},[])
+  
 
-
-  const handleCreateRoom = (roomData: { name: string; description: string }) => {
-    const newRoom = {
-      id: `room-${Date.now()}`,
-      name: roomData.name,
-      description: roomData.description,
-      lastEdited: 'Just now',
-      participants: 1,
-    };
-    
-    setRooms([newRoom, ...rooms]);
-    setIsCreateModalOpen(false);
-
-  };
-
-  const handleRoomClick = (roomId: string) => {
-    // In a real app, this would navigate to the specific room's canvas
-    console.log(`Navigating to room ${roomId}`);
-   
-    // This would navigate to a canvas page for the specific room
-    // navigate(`/canvas/${roomId}`);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
         <div className="flex justify-between items-center mb-8">
@@ -66,7 +50,7 @@ export default function Dashboard() {
             <RoomCard 
               key={room.id}
               room={room}
-              onClick={() => handleRoomClick(room.id)}
+              onClick={() => router.replace(`/dashboard/${room.id}`)}
             />
           ))}
         </div>
@@ -91,11 +75,7 @@ export default function Dashboard() {
         )}
 
         {isCreateModalOpen && (
-          <CreateRoomModal 
-            isOpen={isCreateModalOpen}
-            onClose={() => setIsCreateModalOpen(false)}
-            onCreateRoom={handleCreateRoom}
-          />
+          <CreateRoomModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)}/>
         )}
       </main>
     </div>
