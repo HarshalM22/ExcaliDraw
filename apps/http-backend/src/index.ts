@@ -1,7 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@repo/backend-common/config";
-import { middleware } from "./middleware";
+
 import {
   CreateUSerSchema,
   SigninSchema,
@@ -9,9 +9,20 @@ import {
 } from "@repo/common/types";
 import { client } from "@repo/db/client";
 import cors from "cors";
+import cookieParser from "cookie-parser";
+import { AuthenticatedRequest, middleware } from "./middleware";
+
 const app = express();
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Allowed frontend origin
+    credentials: true, // Allow cookies
+  })
+);
 app.use(express.json());
-app.use(cors());
+
+
 
 app.post("/signup", async function (req, res) {
   const parsedData = CreateUSerSchema.safeParse(req.body);
@@ -27,7 +38,7 @@ app.post("/signup", async function (req, res) {
         email: parsedData.data.email,
         password: parsedData.data.password,
         name: parsedData.data.name,
-        username :parsedData.data.username
+        username: parsedData.data.username,
       },
     });
     res.json({
@@ -40,7 +51,7 @@ app.post("/signup", async function (req, res) {
   }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/login", async function (req, res) {
   const parsedData = SigninSchema.safeParse(req.body);
   if (!parsedData.success) {
     res.json({
@@ -48,37 +59,47 @@ app.post("/login", async (req, res) => {
     });
     return;
   }
-  const find = await client.user.findUnique({
-    where: {
-      email: parsedData.data.email,
-      password: parsedData.data.password,
-    },
-  });
-
-  if (!find) {
-    res.status(403).json({
-      message: "Not Authorized",
+  try {
+    const find = await client.user.findUnique({
+      where: {
+        email: parsedData.data.email,
+        password: parsedData.data.password,
+      },
     });
-    return;
+
+    if (!find) {
+      res.status(403).json({
+        message: "Not Authorized",
+      });
+      return;
+    }
+
+    const token = jwt.sign(
+      {
+        userId: find.id,
+      },
+      JWT_SECRET
+    )
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      maxAge :  24 * 60 * 60 * 1000
+    });
+    res.json({
+     token: token
+    })
+  } catch (e) {
+    res.json({
+      message: e,
+    });
   }
-
-  const token = jwt.sign(
-    {
-      userId: find.id,
-    },
-    JWT_SECRET
-  );
-
-  res.cookie("token",token);
-  res.json({
-    message :"user is loged in"
-  })
-
 });
 
-app.post("/room", middleware, async (req, res) => {
+
+app.post("/room",middleware, async function (req, res) {
   const RoomData = CreateRoomSchema.safeParse(req.body);
-  if (!RoomData || RoomData.data?.name == undefined || null) {
+  if (!RoomData || RoomData.data?.roomName == undefined || null) {
     res.json({
       message: "Incorrect Inputs",
     });
@@ -87,24 +108,51 @@ app.post("/room", middleware, async (req, res) => {
   // @ts-ignore
   const userId = req.userId;
   try {
+    const find = await client.room.findUnique({
+      where :{
+        adminId : userId ,
+        slug : RoomData.data.roomName
+      }
+    })
+    if(find){
+      res.status(411).json({
+        message : "room already exists"
+      })
+    }else{
     const Room = await client.room.create({
-     data : {
-       slug: RoomData.data.name,
-      adminId: userId,
-     }
+      data: {
+        slug: RoomData.data.roomName,
+        adminId: userId,
+      },
     });
     res.json({
       roomId: Room.id,
     });
+  }
   } catch (e) {
     res.status(411).json({
-      message: "room alreasy exists with this name",
+      message: "Something Went wrong",
       e,
     });
   }
 });
 
-app.get("/chats/:roomId", async (req, res) => {
+
+
+app.get("/room",middleware,async function(req:AuthenticatedRequest ,res){
+  const userId = req.userId ;
+  const rooms = await client.room.findMany({
+   where:{
+    adminId : userId 
+   }
+  })
+
+  res.json({
+    rooms : rooms
+  })
+})
+
+app.get("/chats/:roomId", async function (req, res) {
   const roomId = Number(req.params.roomId);
   const messages = await client.chat.findMany({
     where: {
@@ -112,8 +160,7 @@ app.get("/chats/:roomId", async (req, res) => {
     },
     orderBy: {
       id: "desc",
-    },
-    take: 50,
+    }
   });
 
   res.json({
@@ -121,7 +168,7 @@ app.get("/chats/:roomId", async (req, res) => {
   });
 });
 
-app.get("/room/:slug", async (req, res) => {
+app.get("/room/:slug", async function (req, res) {
   const slug = req.params.slug;
   const room = await client.room.findFirst({
     where: {
