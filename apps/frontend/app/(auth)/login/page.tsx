@@ -2,9 +2,7 @@
 
 import Button from '@/components/Button';
 import { HTTP_BACKEND } from '@/config';
-import { cookie } from '@/setcookie/Cookie';
 import axios from 'axios';
-
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
