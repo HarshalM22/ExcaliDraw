@@ -34,9 +34,11 @@ wss.on("connection", function connection(ws, request) {
   if (!url) {
     return;
   }
+  
+
   const queryParams = new URLSearchParams(url.split("?")[1]);
   const token = queryParams.get("token") || "";
-  const userId = checkUser(token);
+  const userId = checkUser(token);  
 
   if (userId == null) {
     ws.close();
