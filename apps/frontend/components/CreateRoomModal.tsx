@@ -42,7 +42,7 @@ export default function CreateRoomModal({
     // if(!res){return}
     const roomId = res.data.roomId
     
-    if(){
+    if(!res){
       router.replace(`/`)
     }
     

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 
 import { TopBar } from "./TopBar";
 import { Game } from "@/draw/Game";
-import { LogOut, LucideLogOut } from "lucide-react";
+import { LucideLogOut } from "lucide-react";
 import { IconButton } from "./IconButton";
 import { useRouter } from "next/navigation";
 

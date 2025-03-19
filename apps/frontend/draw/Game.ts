@@ -20,7 +20,17 @@ type Shape =
       startY: number;
       endX: number;
       endY: number;
-    };
+    } |{
+      type: "eraser";
+      mouseX : number;
+      mouseY : number ;
+      cordinate : cordinates[]
+    }
+
+interface cordinates {
+  x :number
+  y:number
+}    
 
 export class Game {
   private canvas: HTMLCanvasElement;
@@ -31,7 +41,9 @@ export class Game {
   private startX = 0;
   private startY = 0;
   private selectedTool: Tool = "circle";
-
+  private lastX : number ;
+  private lastY:number;
+  private eraser:cordinates[];
   socket: WebSocket;
 
   constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
@@ -41,6 +53,7 @@ export class Game {
     this.existingShapes = [];
     this.socket = socket;
     this.clicked = false;
+    this.eraser = [];
     this.initLogic();
     this.initHandlers();
     this.initMouseHandlers();
@@ -60,8 +73,15 @@ export class Game {
       const message = JSON.parse(event.data);
       if (message.type == "chat") {
         const parsedShape = JSON.parse(message.message);
-        this.existingShapes.push(parsedShape.shape);
-        this.clearContext();
+      //   if (parsedShape.shape.type === "eraser") {
+      //     parsedShape.shape.coordinate.forEach((point: cordinates) => {
+      //         this.eraser.push(point);
+      //     });
+      //     this.eraseShapes();
+      // } else {
+          this.existingShapes.push(parsedShape.shape);
+          this.clearContext();
+      // }
       }
     };
   }
@@ -108,6 +128,9 @@ export class Game {
     this.clicked = true;
     this.startX = e.clientX;
     this.startY = e.clientY;
+  //   for eraser
+    this.lastX = this.startX ;
+    this.lastY = this.startY ;
   };
   mouseUpHandler = (e: any) => {
     this.clicked = false;
@@ -142,6 +165,13 @@ export class Game {
         endX: e.clientX,
         endY: e.clientY,
       };
+    } else if(selectedTool === "eraser"){
+      shape ={
+        type : "eraser",
+        mouseX : e.clientX,
+        mouseY : e.clientY,
+        cordinate : this.eraser
+      }
     }
 
     if (!shape) {
@@ -165,6 +195,7 @@ export class Game {
     if (this.clicked) {
       const width = e.clientX - this.startX;
       const height = e.clientY - this.startY;
+
       this.clearContext();
       this.ctx.strokeStyle = "rgba(255,255,255)";
 
@@ -188,9 +219,70 @@ export class Game {
         this.ctx.closePath();
         this.ctx.strokeStyle = "rgba(255,255,255)";
         this.ctx.stroke();
+      } else if (this.selectedTool=== "eraser"){
+        this.eraser.push({ x: e.clientX, y: e.clientY });
+        this.eraseShapes(); 
       }
     }
   };
+
+  eraseShapes() {
+    this.existingShapes = this.existingShapes.filter(
+        (shape) => !this.eraser.some((eraserPoint) => this.isShapeErased(shape, eraserPoint))
+    );
+    this.clearContext();
+}
+
+  isShapeErased(shape: Shape, eraserPoint: cordinates): boolean {
+    const eraserRadius = 10; // Adjust for sensitivity
+  
+    if (shape.type === "rect") {
+      return (
+        eraserPoint.x >= shape.x &&
+        eraserPoint.x <= shape.x + shape.width &&
+        eraserPoint.y >= shape.y &&
+        eraserPoint.y <= shape.y + shape.height
+      );
+    } else if (shape.type === "circle") {
+      const dist = Math.sqrt(
+        (shape.centerX - eraserPoint.x) ** 2 + (shape.centerY - eraserPoint.y) ** 2
+      );
+      return dist <= shape.radius + eraserRadius;
+    } else if (shape.type === "line") {
+      return this.isPointNearLine(
+        eraserPoint.x,
+        eraserPoint.y,
+        shape.startX,
+        shape.startY,
+        shape.endX,
+        shape.endY,
+        eraserRadius
+      );
+    }
+    return false;
+  }
+  isPointNearLine(px: number, py: number, x1: number, y1: number, x2: number, y2: number, threshold: number): boolean {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+    const dot = A * C + B * D;
+    const len_sq = C * C + D * D;
+    let param = dot / len_sq;
+  
+    if (param < 0 || len_sq === 0) {
+      param = 0;
+    } else if (param > 1) {
+      param = 1;
+    }
+  
+    const nearestX = x1 + param * C;
+    const nearestY = y1 + param * D;
+    const dist = Math.sqrt((px - nearestX) ** 2 + (py - nearestY) ** 2);
+  
+    return dist < threshold;
+  }
+
   initMouseHandlers() {
     this.canvas.addEventListener("mousedown", this.mouseDownHandler);
     this.canvas.addEventListener("mouseup", this.mouseUpHandler);
