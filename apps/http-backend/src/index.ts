@@ -147,7 +147,7 @@ app.get("/room", middleware, async function (req: AuthenticatedRequest, res) {
   });
 });
 
-app.get("/chats/:roomId", async function (req, res) {
+app.get("/chats/:roomId",middleware, async function (req, res) {
   const roomId = Number(req.params.roomId);
   const messages = await client.chat.findMany({
     where: {
@@ -163,7 +163,7 @@ app.get("/chats/:roomId", async function (req, res) {
   });
 });
 
-app.get("/getRoomId/:roomName", async function (req, res) {
+app.get("/getRoomId/:roomName",middleware,async function(req, res){
   const slug = req.params.roomName 
   const room = await client.room.findUnique({
     where: {
@@ -173,14 +173,16 @@ app.get("/getRoomId/:roomName", async function (req, res) {
 
   if (room === null || !room) {
    
-    return  res.status(403).json({
+     res.status(403).json({
       message: "room name is invalid",
     });
+    return 
   }
 
   res.json({
     roomId: room.id
   });
+  
 });
 
 app.listen(3001);
