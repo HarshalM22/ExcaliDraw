@@ -22,8 +22,6 @@ app.use(
 );
 app.use(express.json());
 
-
-
 app.post("/signup", async function (req, res) {
   const parsedData = CreateUSerSchema.safeParse(req.body);
   if (!parsedData.success) {
@@ -79,16 +77,16 @@ app.post("/login", async function (req, res) {
         userId: find.id,
       },
       JWT_SECRET
-    )
+    );
 
     res.cookie("token", token, {
       httpOnly: true,
       secure: false,
-      maxAge :  24 * 60 * 60 * 1000
+      maxAge: 24 * 60 * 60 * 1000,
     });
     res.json({
-     token: token
-    })
+      token: token,
+    });
   } catch (e) {
     res.json({
       message: e,
@@ -96,8 +94,7 @@ app.post("/login", async function (req, res) {
   }
 });
 
-
-app.post("/room",middleware, async function (req, res) {
+app.post("/room", middleware, async function (req, res) {
   const RoomData = CreateRoomSchema.safeParse(req.body);
   if (!RoomData || RoomData.data?.roomName == undefined || null) {
     res.json({
@@ -109,26 +106,26 @@ app.post("/room",middleware, async function (req, res) {
   const userId = req.userId;
   try {
     const find = await client.room.findUnique({
-      where :{
-        adminId : userId ,
-        slug : RoomData.data.roomName
-      }
-    })
-    if(find){
-      res.status(411).json({
-        message : "room already exists"
-      })
-    }else{
-    const Room = await client.room.create({
-      data: {
-        slug: RoomData.data.roomName,
+      where: {
         adminId: userId,
+        slug: RoomData.data.roomName,
       },
     });
-    res.json({
-      roomId: Room.id,
-    });
-  }
+    if (find) {
+      res.status(411).json({
+        message: "room already exists",
+      });
+    } else {
+      const Room = await client.room.create({
+        data: {
+          slug: RoomData.data.roomName,
+          adminId: userId,
+        },
+      });
+      res.json({
+        roomId: Room.id,
+      });
+    }
   } catch (e) {
     res.status(411).json({
       message: "Something Went wrong",
@@ -137,20 +134,18 @@ app.post("/room",middleware, async function (req, res) {
   }
 });
 
-
-
-app.get("/room",middleware,async function(req:AuthenticatedRequest ,res){
-  const userId = req.userId ;
+app.get("/room", middleware, async function (req: AuthenticatedRequest, res) {
+  const userId = req.userId;
   const rooms = await client.room.findMany({
-   where:{
-    adminId : userId 
-   }
-  })
+    where: {
+      adminId: userId,
+    },
+  });
 
   res.json({
-    rooms : rooms
-  })
-})
+    rooms: rooms,
+  });
+});
 
 app.get("/chats/:roomId", async function (req, res) {
   const roomId = Number(req.params.roomId);
@@ -160,7 +155,7 @@ app.get("/chats/:roomId", async function (req, res) {
     },
     orderBy: {
       id: "desc",
-    }
+    },
   });
 
   res.json({
@@ -168,16 +163,23 @@ app.get("/chats/:roomId", async function (req, res) {
   });
 });
 
-app.get("/room/:slug", async function (req, res) {
-  const slug = req.params.slug;
-  const room = await client.room.findFirst({
+app.get("/getRoomId/:roomName", async function (req, res) {
+  const slug = req.params.roomName 
+  const room = await client.room.findUnique({
     where: {
-      slug,
+      slug: slug
     },
   });
 
+  if (room === null || !room) {
+   
+    return  res.status(403).json({
+      message: "room name is invalid",
+    });
+  }
+
   res.json({
-    room,
+    roomId: room.id
   });
 });
 
