@@ -185,4 +185,27 @@ app.get("/getRoomId/:roomName",middleware,async function(req, res){
   
 });
 
+
+app.delete("/eraseShape", middleware, async function (req, res) {
+  const { ids } = req.body; // Get shape IDs from request
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: "Invalid shape IDs" });
+  }
+
+  try {
+    const response = await client.chat.deleteMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+    res.json({
+      message: "done scene hai",
+    });
+  } catch (e) {
+    res.status(500).json({
+      message: "An error occurred",
+      error: e,
+    });
+  }
+});
 app.listen(3001);
