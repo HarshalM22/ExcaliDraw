@@ -220,7 +220,9 @@ export class Game {
         this.ctx.strokeStyle = "rgba(255,255,255)";
         this.ctx.stroke();
       } else if (this.selectedTool=== "eraser"){
+   
         this.eraser.push({ x: e.clientX, y: e.clientY });
+        
         this.eraseShapes(); 
       }
     }
@@ -234,7 +236,7 @@ export class Game {
 }
 
   isShapeErased(shape: Shape, eraserPoint: cordinates): boolean {
-    const eraserRadius = 10; // Adjust for sensitivity
+    const eraserRadius = 20; // Adjust for sensitivity
   
     if (shape.type === "rect") {
       return (
@@ -279,7 +281,9 @@ export class Game {
     const nearestX = x1 + param * C;
     const nearestY = y1 + param * D;
     const dist = Math.sqrt((px - nearestX) ** 2 + (py - nearestY) ** 2);
-  
+   console.log(dist);
+   console.log(threshold);
+   
     return dist < threshold;
   }
 

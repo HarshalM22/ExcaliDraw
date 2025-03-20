@@ -12,3 +12,7 @@ export async function getExistingShapes(roomId: string) {
   
     return shapes;
   }
+
+export async function getShapeIdsFromDB(shapes: Shape[]): Promise<number[]>{
+  const res = await axios.get(``)
+}
