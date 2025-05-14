@@ -43,7 +43,17 @@ export class Game {
 
     this.initialize();
   }
+  public destroy() {
+  this.canvas.removeEventListener("mousedown", this.mouseDownHandler);
+  this.canvas.removeEventListener("mouseup", this.mouseUpHandler);
+  this.canvas.removeEventListener("mousemove", this.mouseMoveHandler);
+  
+   if (this.socket.readyState === WebSocket.OPEN) {
+    this.socket.send(JSON.stringify({ type: "leave_room", roomId: this.roomId }));
+  }
 
+ 
+}
   private async initialize() {
     if (this.initialized) return;
     this.initialized = true;
