@@ -1,211 +1,160 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "@repo/backend-common/config";
+import bcrypt from "bcryptjs";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 
+import { JWT_SECRET } from "@repo/backend-common/config";
+import { client } from "@repo/db/client";
 import {
   CreateUSerSchema,
   SigninSchema,
   CreateRoomSchema,
+  CreateElementSchema,
+  UpdateElementSchema,
+  UpdateSessionSchema,
 } from "@repo/common/types";
-import { client } from "@repo/db/client";
-import cors from "cors";
-import cookieParser from "cookie-parser";
 import { AuthenticatedRequest, middleware } from "./middleware";
 
 const app = express();
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: "http://localhost:3000", // Allowed frontend origin
-    credentials: true, // Allow cookies
-  })
-);
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true,
+}));
 app.use(express.json());
 
-app.post("/signup", async function (req, res) {
-  const parsedData = CreateUSerSchema.safeParse(req.body);
-  if (!parsedData.success) {
-    res.json({
-      message: "incorrect inputs",
-    });
-    return;
-  }
+//@ts-ignore
+app.post("/signup", async (req, res) => {
+  const parsed = CreateUSerSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: "Invalid input" });
+
+  const { email, password, name, username } = parsed.data;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   try {
     await client.user.create({
-      data: {
-        email: parsedData.data.email,
-        password: parsedData.data.password,
-        name: parsedData.data.name,
-        username: parsedData.data.username,
-      },
+      data: { email, password: hashedPassword, name, username },
     });
-    res.json({
-      message: "user has been signed up",
-    });
+    res.json({ message: "User signed up" });
   } catch (e) {
-    res.status(411).json({
-      message: "email is already registered",
-    });
+    res.status(409).json({ message: "Email already registered" });
   }
 });
+//@ts-ignore
+app.post("/login", async (req, res) => {
+  const parsed = SigninSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: "Invalid input" });
 
-app.post("/login", async function (req, res) {
-  const parsedData = SigninSchema.safeParse(req.body);
-  if (!parsedData.success) {
-    res.json({
-      message: "Incorrect inputs",
-    });
-    return;
+  const { email, password } = parsed.data;
+  const user = await client.user.findUnique({ where: { email } });
+
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return res.status(403).json({ message: "Not Authorized" });
   }
-  try {
-    const find = await client.user.findUnique({
-      where: {
-        email: parsedData.data.email,
-        password: parsedData.data.password,
-      },
-    });
 
-    if (!find) {
-      res.status(403).json({
-        message: "Not Authorized",
-      });
-      return;
-    }
+  const token = jwt.sign({ userId: user.id }, JWT_SECRET);
+  res.cookie("token", token, { httpOnly: true, secure: false, maxAge: 86400000 });
+  res.json({ token });
+});
+//@ts-ignore
+app.post("/document", middleware, async (req: AuthenticatedRequest, res) => {
+  const parsed = CreateRoomSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: "Invalid input" });
 
-    const token = jwt.sign(
-      {
-        userId: find.id,
-      },
-      JWT_SECRET
-    );
+  const { roomName } = parsed.data;
+  const existing = await client.document.findUnique({
+    where: { slug: roomName },
+  });
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-    res.json({
-      token: token,
-    });
-  } catch (e) {
-    res.json({
-      message: e,
-    });
-  }
+  if (existing) return res.status(409).json({ message: "Document exists" });
+
+  const doc = await client.document.create({
+    data: { title: roomName, slug: roomName, createdBy: Number(req.userId) },
+  });
+
+  res.json({ documentId: doc.id });
 });
 
-app.post("/room", middleware, async function (req, res) {
-  const RoomData = CreateRoomSchema.safeParse(req.body);
-  if (!RoomData || RoomData.data?.roomName == undefined || null) {
-    res.json({
-      message: "Incorrect Inputs",
-    });
-    return;
-  }
-  // @ts-ignore
-  const userId = req.userId;
-  try {
-    const find = await client.room.findUnique({
-      where: {
-        adminId: userId,
-        slug: RoomData.data.roomName,
-      },
-    });
-    if (find) {
-      res.status(411).json({
-        message: "room already exists",
-      });
-    } else {
-      const Room = await client.room.create({
-        data: {
-          slug: RoomData.data.roomName,
-          adminId: userId,
-        },
-      });
-      res.json({
-        roomId: Room.id,
-      });
-    }
-  } catch (e) {
-    res.status(411).json({
-      message: "Something Went wrong",
-      e,
-    });
-  }
+app.get("/documents", middleware, async (req: AuthenticatedRequest, res) => {
+  const docs = await client.document.findMany({ where: { createdBy: Number(req.userId)} });
+  res.json({ documents: docs });
+});
+//@ts-ignore
+app.get("/document/:slug", middleware, async (req, res) => {
+  const { slug } = req.params;
+  const document = await client.document.findUnique({
+    where: { slug },
+    include: { elements: true },
+  });
+
+  if (!document) return res.status(404).json({ message: "Not found" });
+  res.json({ document });
 });
 
-app.get("/room", middleware, async function (req: AuthenticatedRequest, res) {
-  const userId = req.userId;
-  const rooms = await client.room.findMany({
+app.get("/elements/:documentId", middleware, async (req, res) => {
+  const elements = await client.element.findMany({
+    where: { documentId: Number(req.params.documentId) },
+    orderBy: { id: "asc" },
+  });
+  res.json({ elements });
+});
+//@ts-ignore
+app.post("/element", middleware, async (req, res) => {
+  const parsed = CreateElementSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: "Invalid input" });
+
+  const element = await client.element.create({ data: parsed.data });
+  res.json({ element });
+});
+//@ts-ignore
+app.put("/element/:id", middleware, async (req, res) => {
+  const parsed = UpdateElementSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: "Invalid input" });
+
+  const updated = await client.element.update({
+    where: { id: Number(req.params.id) },
+    data: parsed.data,
+  });
+  res.json({ updated });
+});
+//@ts-ignore
+app.delete("/element", middleware, async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids)) return res.status(400).json({ message: "Invalid IDs" });
+
+  await client.element.deleteMany({ where: { id: { in: ids } } });
+  res.json({ message: "Deleted" });
+});
+//@ts-ignore
+app.post("/session/update", middleware, async (req:AuthenticatedRequest, res) => {
+  const parsed = UpdateSessionSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: "Invalid input" });
+
+  const { documentId, cursorX, cursorY, selectedElementIds } = parsed.data;
+  const session = await client.userSession.upsert({
     where: {
-      adminId: userId,
-    },
-  });
-
-  res.json({
-    rooms: rooms,
-  });
-});
-
-app.get("/chats/:roomId",middleware, async function (req, res) {
-  const roomId = Number(req.params.roomId);
-  const messages = await client.chat.findMany({
-    where: {
-      roomId: roomId,
-    },
-    orderBy: {
-      id: "desc",
-    },
-  });
-
-  res.json({
-    messages,
-  });
-});
-
-app.get("/getRoomId/:roomName",middleware,async function(req, res){
-  const slug = req.params.roomName 
-  const room = await client.room.findUnique({
-    where: {
-      slug: slug
-    },
-  });
-
-  if (room === null || !room) {
-   
-     res.status(403).json({
-      message: "room name is invalid",
-    });
-    return 
-  }
-
-  res.json({
-    roomId: room.id
-  });
-  
-});
-
-
-app.delete("/eraseShape", middleware, async function (req, res) {
-  const { ids } = req.body; // Get shape IDs from request
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return res.status(400).json({ error: "Invalid shape IDs" });
-  }
-
-  try {
-    const response = await client.chat.deleteMany({
-      where: {
-        id: { in: ids },
+      userId_documentId: {
+        userId: Number(req.userId),
+        documentId,
       },
-    });
-    res.json({
-      message: "done scene hai",
-    });
-  } catch (e) {
-    res.status(500).json({
-      message: "An error occurred",
-      error: e,
-    });
-  }
+    },
+    update: {
+      cursorX,
+      cursorY,
+      selectedElementIds,
+      lastActiveAt: new Date(),
+    },
+    create: {
+      userId: Number(req.userId),
+      documentId,
+      cursorX,
+      cursorY,
+      selectedElementIds,
+    },
+  });
+
+  res.json({ session });
 });
-app.listen(3001);
+
+app.listen(3001, () => console.log("Server running on http://localhost:3001"));

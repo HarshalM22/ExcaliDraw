@@ -20,7 +20,7 @@ export const middleware = (
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-    req.userId = decoded.userId;
+    req.userId = decoded.userId  ;
     next();
   } catch (e) {
     res.status(403).json({ message: "Authentication Failed" });
