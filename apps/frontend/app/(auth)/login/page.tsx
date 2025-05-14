@@ -23,7 +23,7 @@ export default function Login () {
     console.log("something brokeee at backend......")
   }
 
-  router.replace("/dashboard") ;
+  router.push("/dashboard") ;
  }
 
 
