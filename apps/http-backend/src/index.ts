@@ -57,6 +57,10 @@ app.post("/login", async (req, res) => {
   res.cookie("token", token, { httpOnly: true, secure: false, maxAge: 86400000 });
   res.json({ token });
 });
+app.post('/logout', (req, res) => {
+  res.clearCookie('token'); // Clear the specific cookie holding the token
+  res.status(200).send('Logged out successfully');
+});
 //@ts-ignore
 app.post("/document", middleware, async (req: AuthenticatedRequest, res) => {
   const parsed = CreateRoomSchema.safeParse(req.body);
