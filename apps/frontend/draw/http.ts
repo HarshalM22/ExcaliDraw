@@ -4,6 +4,7 @@ import { Shape } from "./Game";
 
 
 export async function getExistingShapes(documentId: number): Promise<(Shape & { id: number })[]> {
+  console.log("docs id", documentId);
   try {
     const response = await axios.get(`${HTTP_BACKEND}/elements/${documentId}`, {
       withCredentials: true, // important for sending the cookie
